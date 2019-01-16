@@ -40,19 +40,38 @@ public class SpawnManager : MonoBehaviour
     {
         List<SpawnPoint> spawnPoints = new List<SpawnPoint>(_sharedSpawnPoints.Count);
         CalculateDistancesForSpawnPoints(team);
-        GetSpawnPointsByDistanceSpawning(/*Please add appropriate parameters here*/);
+        GetSpawnPointsByDistanceSpawning(team, ref spawnPoints);
         if (spawnPoints.Count <= 0)
         {
             GetSpawnPointsBySquadSpawning(team, ref spawnPoints);
         }
-        SpawnPoint spawnPoint = spawnPoints.Count <= 1 ? spawnPoints[0] : spawnPoints[_random.Next(0, (int)((float)spawnPoints.Count * .5f))];
+        SpawnPoint spawnPoint = spawnPoints[0];
         spawnPoint.StartTimer();
         return spawnPoint;
     }
 
-    private void GetSpawnPointsByDistanceSpawning(/*Please add appropriate parameters here*/)
+    private void GetSpawnPointsByDistanceSpawning(PlayerTeam team, ref List<SpawnPoint> suitableSpawnPoints)
     {
-		//Please apply your algorithm here
+        for(int i=0; i<_sharedSpawnPoints.Count;i++)
+        {
+            suitableSpawnPoints.Add(_sharedSpawnPoints[i]);
+        }
+        float maxDistance;
+        maxDistance = suitableSpawnPoints[0].DistanceToClosestEnemy;
+        var tempSpawnPoint = suitableSpawnPoints[0];
+        print("compare with other");
+        for (int i=0; i<suitableSpawnPoints.Count;i++)
+        {
+            print(suitableSpawnPoints[i].DistanceToClosestEnemy);
+            print(_sharedSpawnPoints[i].DistanceToClosestEnemy);
+            if( (suitableSpawnPoints[i].DistanceToClosestEnemy > maxDistance) && (suitableSpawnPoints[i].DistanceToClosestEnemy > _minMemberDistance) && (suitableSpawnPoints[i].DistanceToClosestFriend > _minMemberDistance) && (suitableSpawnPoints[i].isAvailable) )
+            {
+                //print("swapping");
+                tempSpawnPoint = suitableSpawnPoints[0];
+                suitableSpawnPoints[0] = suitableSpawnPoints[i];
+                suitableSpawnPoints[i] = tempSpawnPoint;
+            }
+        }
     }
 
     private void GetSpawnPointsBySquadSpawning(PlayerTeam team, ref List<SpawnPoint> suitableSpawnPoints)
@@ -99,17 +118,20 @@ public class SpawnManager : MonoBehaviour
 
     private float GetDistanceToClosestMember(Vector3 position, PlayerTeam playerTeam)
     {
+        _closestDistance = float.MaxValue;   //Burası bulmam gereken hata diye düşünüyorum. Bu _closestDistance maximum float value olarak initialize edilmeli.
         foreach (var player in DummyPlayers)
         {
             if (!player.Disabled && player.PlayerTeamValue != PlayerTeam.None && player.PlayerTeamValue == playerTeam && !player.IsDead())
             {
                 float playerDistanceToSpawnPoint = Vector3.Distance(position, player.Transform.position);
+                //print(playerDistanceToSpawnPoint);
                 if (playerDistanceToSpawnPoint < _closestDistance)
                 {
                     _closestDistance = playerDistanceToSpawnPoint;
                 }
             }
         }
+        //print(_closestDistance);
         return _closestDistance;
     }
 
