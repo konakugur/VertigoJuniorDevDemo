@@ -7,6 +7,7 @@ public class SpawnPoint : MonoBehaviour
 	public Transform PointTransform { get; private set; }
 	private float _distanceToClosestEnemy;
 	private float _distanceToClosestFriend;
+    public bool isAvailable;    //Spawn noktası seçiminden sonra 2 saniye boyunca kullanılamaz olduğunu gösterecek flag tanımlandı.
 
 	public float SpawnTimer { get; private set; }
 
@@ -38,6 +39,8 @@ public class SpawnPoint : MonoBehaviour
 
 	void Awake()
 	{
+        isAvailable = true;  //İlk açılışta spawn noktasını seçilebilir kılmak için isAvailable flag'i true yapıldı.
+
 		PointTransform = transform;
 #if UNITY_EDITOR
         if (transform.rotation.eulerAngles.x != 0 || transform.rotation.eulerAngles.z != 0)
@@ -55,8 +58,13 @@ public class SpawnPoint : MonoBehaviour
 	{
 		if (SpawnTimer > 0)
 		{
+            isAvailable = false; //Spawn noktasının, timer aktif durumdayken kullanılabilir olmaması için bu flag false yapıldı.
 			SpawnTimer -= Time.deltaTime;
 		}
+        else
+        {
+            isAvailable = true;  //Spawn noktasının, timer pasif durumdayken kullanılabilir olması için bu flag true yapıldı.
+        }
 	}
 }
 
