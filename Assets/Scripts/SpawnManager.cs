@@ -36,6 +36,12 @@ public class SpawnManager : MonoBehaviour
     }
 
     #region SPAWN ALGORITHM
+
+    /// <summary>
+    /// Her spawn noktasına en yakın düşman ve dost oyuncu uzaklıklarını hesaplar.
+	/// Test için paylaşımlı spawn noktalarından en uygun olanını düşman uzaklığına göre seçer.
+	/// Spawn noktaları listesinin birinci elemanını return eder.
+	/// </summary>
     public SpawnPoint GetSharedSpawnPoint(PlayerTeam team)
     {
         List<SpawnPoint> spawnPoints = new List<SpawnPoint>(_sharedSpawnPoints.Count);
@@ -50,26 +56,34 @@ public class SpawnManager : MonoBehaviour
         return spawnPoint;
     }
 
+
+    /// <summary>
+	/// Filtrelere uygun olmayan spawn noktalarını eler.
+	/// Kalanlar arasında düşman uzaklığına göre en uygun spawn noktasını listenin en başına atar.
+	/// </summary>
     private void GetSpawnPointsByDistanceSpawning(PlayerTeam team, ref List<SpawnPoint> suitableSpawnPoints)
     {
+        suitableSpawnPoints.Clear();
         for(int i=0; i<_sharedSpawnPoints.Count;i++)
         {
-            suitableSpawnPoints.Add(_sharedSpawnPoints[i]);
+            if( (_sharedSpawnPoints[i].DistanceToClosestEnemy > _minMemberDistance) && (_sharedSpawnPoints[i].DistanceToClosestFriend > _minMemberDistance) )  //Filtreler uygulandı, filtrelerden geçenler uygun spawn noktaları olarak belirlendi.
+            {
+                suitableSpawnPoints.Add(_sharedSpawnPoints[i]);
+            }
         }
+        print(suitableSpawnPoints.Count);
         float maxDistance;
-        maxDistance = suitableSpawnPoints[0].DistanceToClosestEnemy;
+        maxDistance = float.MinValue;
         var tempSpawnPoint = suitableSpawnPoints[0];
-        print("compare with other");
         for (int i=0; i<suitableSpawnPoints.Count;i++)
         {
-            print(suitableSpawnPoints[i].DistanceToClosestEnemy);
-            print(_sharedSpawnPoints[i].DistanceToClosestEnemy);
-            if( (suitableSpawnPoints[i].DistanceToClosestEnemy > maxDistance) && (suitableSpawnPoints[i].DistanceToClosestEnemy > _minMemberDistance) && (suitableSpawnPoints[i].DistanceToClosestFriend > _minMemberDistance) && (suitableSpawnPoints[i].isAvailable) )
+            if(  (suitableSpawnPoints[i].isAvailable) && (suitableSpawnPoints[i].DistanceToClosestEnemy > maxDistance) )
             {
                 //print("swapping");
                 tempSpawnPoint = suitableSpawnPoints[0];
                 suitableSpawnPoints[0] = suitableSpawnPoints[i];
                 suitableSpawnPoints[i] = tempSpawnPoint;
+                maxDistance = suitableSpawnPoints[i].DistanceToClosestEnemy;
             }
         }
     }
@@ -113,6 +127,7 @@ public class SpawnManager : MonoBehaviour
         {
             _sharedSpawnPoints[i].DistanceToClosestFriend = GetDistanceToClosestMember(_sharedSpawnPoints[i].PointTransform.position, playerTeam);
             _sharedSpawnPoints[i].DistanceToClosestEnemy = GetDistanceToClosestMember(_sharedSpawnPoints[i].PointTransform.position, playerTeam == PlayerTeam.BlueTeam ? PlayerTeam.RedTeam : playerTeam == PlayerTeam.RedTeam ? PlayerTeam.BlueTeam : PlayerTeam.None);
+            //print(_sharedSpawnPoints[i].DistanceToClosestEnemy);
         }
     }
 
@@ -124,14 +139,12 @@ public class SpawnManager : MonoBehaviour
             if (!player.Disabled && player.PlayerTeamValue != PlayerTeam.None && player.PlayerTeamValue == playerTeam && !player.IsDead())
             {
                 float playerDistanceToSpawnPoint = Vector3.Distance(position, player.Transform.position);
-                //print(playerDistanceToSpawnPoint);
                 if (playerDistanceToSpawnPoint < _closestDistance)
                 {
                     _closestDistance = playerDistanceToSpawnPoint;
                 }
             }
         }
-        //print(_closestDistance);
         return _closestDistance;
     }
 
